@@ -18,7 +18,7 @@
         <p>
             The alarm will start at <strong>{{ alarm_manager.get_ring_time() }}</strong> and play playlist <strong>{{ alarm_manager.get_playlist().name }}</strong> with <strong>{{ alarm_manager.volume }}% volume</strong> (time to full volume {{ alarm_manager.volume_increase_seconds }} sec).<br/>
             <span id="clock"></span><br/>
-           
+
             <a role="button" class="btn btn-success btn-large btn-warning" href="/alarmclock/cancel/">Cancel alarm</a>
         </p>
     </div>
@@ -32,7 +32,7 @@
     <div class="panel-body">
         <p>
             No alarm has been set.
-    
+
             <form class="form-horizontal" action="/alarmclock/set/" method="post"> <!-- TODO proper mention of the app name instead of putting it raw in the URL-->
 
             <fieldset>
@@ -42,7 +42,16 @@
             <div class="form-group clockpicker">
               <label class="col-md-4 control-label" for="time">Time</label>
               <div class="col-md-4">
-                <input type="text" name="time" class="form-control" value="{{ config['def_time'] }}">
+                <input type="text" id="time" name="time" class="form-control" value="{{ config['def_time'] }}">
+              </div>
+            </div>
+
+            <div class="form-group clockpicker">
+              <label class="col-md-4 control-label">Sleep Cycles</label>
+              <div class="col-md-4">
+              <span id="recommendedwake"></span>
+
+
               </div>
             </div>
 
@@ -91,6 +100,51 @@
 
     </div>
 </div>
+
+<script type="text/javascript">
+  var currenttime = {{ alarm_manager.get_seconds_since_midnight() }};
+
+  function setwaketimefield(time){
+    console.log("setting time to"+time);
+    $('#time').val(time);
+  }
+
+  function clockconvert(secondsSinceMidnight) {
+      var hh = Math.floor(secondsSinceMidnight / 3600);
+      var mm = Math.floor(secondsSinceMidnight % 3600 / 60);
+      if (hh>=24){
+        hh= hh - 24;
+      }
+      if(hh < 10) {
+          hh = "0" + hh;
+      }
+      if(mm < 10) {
+          mm = "0" + mm;
+      }
+      return hh + ":" + mm;
+      secondsSinceMidnight = (secondsSinceMidnight + 1) % 86400;
+  }
+
+  function populatesleepcycles(){
+    var naptime = currenttime + (105*60);//15minutes to fall asleep and first sleep cycle
+    var links = "<a href='#' onclick='setwaketimefield(\""+clockconvert(naptime)+"\")'>"+clockconvert(naptime)+"</a>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;"; //1 sleep cycle (nap)
+    links += "<a href='#' onclick='setwaketimefield(\""+clockconvert(naptime+(1*90*60))+"\")'>"+clockconvert(naptime+(1*90*60))+"</a>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;"; //2 sleep cycles
+    links += "<a href='#' onclick='setwaketimefield(\""+clockconvert(naptime+(2*90*60))+"\")'>"+clockconvert(naptime+((2*90*60)))+"</a>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;";//3 sleep cycles
+    links += "<a href='#' onclick='setwaketimefield(\""+clockconvert(naptime+(3*90*60))+"\")'>"+clockconvert(naptime+((3*90*60)))+"</a>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;";//4 sleep cycles
+    links += "<a href='#' onclick='setwaketimefield(\""+clockconvert(naptime+(4*90*60))+"\")'>"+clockconvert(naptime+((4*90*60)))+"</b></a>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;"; //5 sleep cycles
+    links += "<a href='#' onclick='setwaketimefield(\""+clockconvert(naptime+(5*90*60))+"\")'>"+clockconvert(naptime+((5*90*60)))+"</b></a>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;"; //6 sleep cycles
+
+    $('.col-md-4 #recommendedwake').html(links);
+  }
+ 
+
+
+</script>
+
+
+
+
+
 {% end %}
 
 {% end %}
@@ -116,6 +170,7 @@ window.setInterval(updateClock, 1000);
 {% else %}
 $('.clockpicker').clockpicker({'autoclose': true});
 $('#volume').change();
+populatesleepcycles();
 {% end %}
 </script>
 {% end %}
